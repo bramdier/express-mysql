@@ -1,36 +1,36 @@
 const express = require('express');
-const mysql = require('mysql2');
+require('dotenv').config();
+const PORT = process.env.PORT || 5000;
 const userRoutes = require('./routes/users');
 const middlewareLogRequest = require('./middleware/logRequest');
-
-const dbPool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'express_mysql'
-  });
+const upload = require('./middleware/multer');
 
 const app = express();
 
+//Logging
 app.use(middlewareLogRequest);
+//Json Converter
 app.use(express.json());
-
+//Permission Static File
+app.use("/assets",express.static('public/images'));
+//Routing
 app.use("/users", userRoutes);
 
-app.use("/", (req, res) => {
-    dbPool.execute('SELECT * FROM users', (err, rows) => {
-        if(err){
-            res.json({
-                message: 'Connection Failed'
-            })
-        }
-        res.json({
-            message: 'Connection Success',
-            data: rows,
-        })
+// Upload Configuration
+app.post("/upload", upload.single('photo'), (req, res) => {
+    res.json({
+        message: "Upload Succesfully"
     })
 })
 
-app.listen(4000, () => {
-    console.log('Server berhasil running di port 4000');
+//Handling Error
+app.use((err, req, res, next) => {
+    res.json({
+        message: err.message
+    })
+})
+
+//Port Server Connection
+app.listen(PORT, () => {
+    console.log(`Server berhasil running di port ${PORT}`);
 })
